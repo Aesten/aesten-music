@@ -1,13 +1,20 @@
 import asyncio
 
 from apscheduler.schedulers.background import BackgroundScheduler
-from datetime import datetime, timedelta
 
 scheduler = BackgroundScheduler()
+loop = asyncio.get_event_loop()
 
 
 def start():
     scheduler.start()
+    try:
+        loop.run_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        scheduler.shutdown()
+        loop.close()
 
 
 async def delete_message(message):
@@ -15,9 +22,9 @@ async def delete_message(message):
         await message.delete()
 
 
-def schedule_delete(s, message):
+def schedule_delete(seconds, message):
     async def run_job():
-        await asyncio.sleep(s)
+        await asyncio.sleep(seconds)
         await delete_message(message)
 
-    scheduler.add_job(lambda: asyncio.ensure_future(run_job()), 'date', run_date=datetime.now() + timedelta(seconds=s))
+    loop.create_task(run_job())
