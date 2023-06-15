@@ -34,7 +34,7 @@ def start_bot():
         channel = author.voice.channel
         channel_audio_paths[channel] = None
         await channel.connect()
-        await ctx.send(f"Joined [{channel}] upon request of @{author.display_name}")
+        await ctx.send(f"Joined [{channel}] upon request of [{author.display_name}]")
 
     @bot.command()
     async def leave(ctx):
@@ -54,7 +54,7 @@ def start_bot():
         audio_folder_path = os.path.join(os.getcwd(), "audio", str(channel.id))
         shutil.rmtree(audio_folder_path)
         await ctx.voice_client.disconnect()
-        await ctx.send(f"Left [{channel}] upon request of @{ctx.author.display_name}")
+        await ctx.send(f"Left [{channel}] upon request of [{ctx.author.display_name}]")
 
     @bot.command()
     async def play(ctx, url):
@@ -109,7 +109,7 @@ def start_bot():
             ctx.voice_client.stop()
 
         channel_audio_paths[channel] = None
-        await ctx.send(f"Music cancelled by @{ctx.author.display_name}")
+        await ctx.send(f"Music cancelled by [{ctx.author.display_name}]")
 
     @bot.command()
     async def pause(ctx):
@@ -120,7 +120,7 @@ def start_bot():
             return
 
         ctx.voice_client.pause()
-        await ctx.send(f"Music paused by @{ctx.author.display_name}")
+        await ctx.send(f"Music paused by [{ctx.author.display_name}]")
 
     @bot.command()
     async def resume(ctx):
@@ -131,7 +131,7 @@ def start_bot():
             return
 
         ctx.voice_client.resume()
-        await ctx.send(f"Music resumed by @{ctx.author.display_name}")
+        await ctx.send(f"Music resumed by [{ctx.author.display_name}]")
 
     # Start bot
     bot.run(env.get_token())
