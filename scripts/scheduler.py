@@ -1,11 +1,13 @@
-import threading
-import asyncio
+from apscheduler.schedulers.background import BackgroundScheduler
+from datetime import datetime, timedelta
+
+scheduler = BackgroundScheduler()
+scheduler.start()
 
 
-async def _schedule_delete(seconds, message):
-    await asyncio.sleep(seconds)
-    await message.delete()
+def schedule_delete(message, seconds):
+    def delete_message():
+        if message is not None:
+            message.delete()
 
-
-def delete_after(seconds, message):
-    asyncio.run_coroutine_threadsafe(_schedule_delete(seconds, message), asyncio.get_event_loop())
+    scheduler.add_job(delete_message, 'date', run_date=datetime.now() + timedelta(seconds=seconds))
