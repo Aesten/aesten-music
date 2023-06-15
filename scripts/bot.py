@@ -26,7 +26,7 @@ def start_bot():
     async def join(ctx):
         await ctx.message.delete()
         if ctx.author.voice is None:
-            message = await ctx.send("You are not in a voice channel.")
+            message = await ctx.send("> You are not in a voice channel.")
             scheduler.schedule_delete(30, message)
             return
 
@@ -40,12 +40,12 @@ def start_bot():
     async def leave(ctx):
         await ctx.message.delete()
         if ctx.voice_client is None:
-            message = await ctx.send("I am not currently in a voice channel.")
+            message = await ctx.send("> I am not currently in a voice channel.")
             scheduler.schedule_delete(30, message)
             return
 
         if ctx.voice_client.is_playing():
-            message = await ctx.send("Please stop the music with !stop before leaving.")
+            message = await ctx.send("> Please stop the music with !stop before leaving.")
             scheduler.schedule_delete(30, message)
             return
 
@@ -60,14 +60,14 @@ def start_bot():
     async def play(ctx, url):
         await ctx.message.delete()
         if ctx.voice_client is None:
-            message = await ctx.send("I am not currently in a voice channel. Use !join to summon me.")
+            message = await ctx.send("> I am not currently in a voice channel. Use !join to summon me.")
             scheduler.schedule_delete(30, message)
             return
 
         channel = ctx.voice_client.channel
 
         if ctx.voice_client.is_playing() or channel_audio_paths[channel] is not None:
-            message = await ctx.send("The previous music has not properly ended, you can use !stop to force")
+            message = await ctx.send("> The previous music has not properly ended, you can use !stop to force")
             scheduler.schedule_delete(30, message)
             return
 
@@ -94,14 +94,14 @@ def start_bot():
         await ctx.message.delete()
 
         if ctx.voice_client is None:
-            message = await ctx.send("Bot is not in voice channel.")
+            message = await ctx.send("> Bot is not in voice channel.")
             scheduler.schedule_delete(30, message)
             return
 
         channel = ctx.voice_client.channel
 
         if not ctx.voice_client.is_playing() and channel_audio_paths[channel] is None:
-            message = await ctx.send("There is no audio being played.")
+            message = await ctx.send("> There is no audio being played.")
             scheduler.schedule_delete(30, message)
             return
 
@@ -115,7 +115,7 @@ def start_bot():
     async def pause(ctx):
         await ctx.message.delete()
         if ctx.voice_client is None or not ctx.voice_client.is_playing():
-            message = await ctx.send("There is no audio being played.")
+            message = await ctx.send("> There is no audio being played.")
             scheduler.schedule_delete(30, message)
             return
 
@@ -126,7 +126,7 @@ def start_bot():
     async def resume(ctx):
         await ctx.message.delete()
         if ctx.voice_client is None or not ctx.voice_client.is_paused():
-            message = await ctx.send("There is no audio paused.")
+            message = await ctx.send("> There is no audio paused.")
             scheduler.schedule_delete(30, message)
             return
 

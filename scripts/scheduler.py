@@ -2,7 +2,10 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime, timedelta
 
 scheduler = BackgroundScheduler()
-scheduler.start()
+
+
+def start():
+    scheduler.start()
 
 
 def schedule_delete(seconds, message):
