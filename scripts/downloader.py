@@ -7,7 +7,7 @@ from scripts import env
 
 
 def try_download(url, channel_id):
-    output_path = os.path.join("/audio", str(channel_id), "%(id)s.%(ext)s")
+    output_path = os.path.join(os.getcwd(), "audio", str(channel_id), "%(id)s.%(ext)s")
 
     ytdl_opts = {
         'format': 'bestaudio/best',
@@ -27,8 +27,7 @@ def try_download(url, channel_id):
             video_info = ytdl.extract_info(url, download=False)
             title = video_info.get('title')
             duration = video_info.get('duration')
-            filename = os.path.splitext(ytdl.prepare_filename(video_info))[0] + '.opus'
-            audio_path = os.path.join(os.getcwd(), filename)
+            audio_path = ytdl.prepare_filename(video_info).replace('.webm', '.opus')
             if os.path.exists(audio_path):
                 print('[DOWNLOADER] Music already cached')
                 return title, audio_path
