@@ -5,7 +5,7 @@ scheduler = BackgroundScheduler()
 scheduler.start()
 
 
-def schedule_delete(message, seconds):
+def schedule_delete(seconds, message):
     def delete_message():
         if message is not None:
             message.delete()
