@@ -3,7 +3,7 @@ import shutil
 
 import discord
 from discord.ext import commands
-from scripts import env, downloader, scheduler
+from scripts import env, downloader
 
 # channel-audio mapping
 channel_audio_paths = {}
@@ -26,27 +26,24 @@ def start_bot():
     async def join(ctx):
         await ctx.message.delete()
         if ctx.author.voice is None:
-            message = await ctx.send("> You are not in a voice channel.")
-            scheduler.schedule_delete(30, message)
+            await ctx.send("> You are not in a voice channel.")
             return
 
         author = ctx.author
         channel = author.voice.channel
         channel_audio_paths[channel] = None
         await channel.connect()
-        await ctx.send(f"Joined [{channel}] upon request of [{author.display_name}]")
+        await ctx.send(f"Joined [{channel}] upon request of **{author.display_name}**")
 
     @bot.command()
     async def leave(ctx):
         await ctx.message.delete()
         if ctx.voice_client is None:
-            message = await ctx.send("> I am not currently in a voice channel.")
-            scheduler.schedule_delete(30, message)
+            await ctx.send("> I am not currently in a voice channel.")
             return
 
         if ctx.voice_client.is_playing():
-            message = await ctx.send("> Please stop the music with !stop before leaving.")
-            scheduler.schedule_delete(30, message)
+            await ctx.send("> Please stop the music with !stop before leaving.")
             return
 
         channel = ctx.voice_client.channel
@@ -54,21 +51,19 @@ def start_bot():
         audio_folder_path = os.path.join(os.getcwd(), "audio", str(channel.id))
         shutil.rmtree(audio_folder_path)
         await ctx.voice_client.disconnect()
-        await ctx.send(f"Left [{channel}] upon request of [{ctx.author.display_name}]")
+        await ctx.send(f"Left [{channel}] upon request of **{ctx.author.display_name}**")
 
     @bot.command()
     async def play(ctx, url):
         await ctx.message.delete()
         if ctx.voice_client is None:
-            message = await ctx.send("> I am not currently in a voice channel. Use !join to summon me.")
-            scheduler.schedule_delete(30, message)
+            await ctx.send("> I am not currently in a voice channel. Use !join to summon me.")
             return
 
         channel = ctx.voice_client.channel
 
         if ctx.voice_client.is_playing() or channel_audio_paths[channel] is not None:
-            message = await ctx.send("> The previous music has not properly ended, you can use !stop to force")
-            scheduler.schedule_delete(30, message)
+            await ctx.send("> The previous music has not properly ended, you can use !stop to force")
             return
 
         message = await ctx.send("Preparing audio...")
@@ -94,44 +89,40 @@ def start_bot():
         await ctx.message.delete()
 
         if ctx.voice_client is None:
-            message = await ctx.send("> Bot is not in voice channel.")
-            scheduler.schedule_delete(30, message)
+            await ctx.send("> Bot is not in voice channel.")
             return
 
         channel = ctx.voice_client.channel
 
         if not ctx.voice_client.is_playing() and channel_audio_paths[channel] is None:
-            message = await ctx.send("> There is no audio being played.")
-            scheduler.schedule_delete(30, message)
+            await ctx.send("> There is no audio being played.")
             return
 
         if ctx.voice_client.is_playing():
             ctx.voice_client.stop()
 
         channel_audio_paths[channel] = None
-        await ctx.send(f"Music cancelled by [{ctx.author.display_name}]")
+        await ctx.send(f"Music cancelled by **{ctx.author.display_name}**")
 
     @bot.command()
     async def pause(ctx):
         await ctx.message.delete()
         if ctx.voice_client is None or not ctx.voice_client.is_playing():
-            message = await ctx.send("> There is no audio being played.")
-            scheduler.schedule_delete(30, message)
+            await ctx.send("> There is no audio being played.")
             return
 
         ctx.voice_client.pause()
-        await ctx.send(f"Music paused by [{ctx.author.display_name}]")
+        await ctx.send(f"Music paused by **{ctx.author.display_name}**")
 
     @bot.command()
     async def resume(ctx):
         await ctx.message.delete()
         if ctx.voice_client is None or not ctx.voice_client.is_paused():
-            message = await ctx.send("> There is no audio paused.")
-            scheduler.schedule_delete(30, message)
+            await ctx.send("> There is no audio paused.")
             return
 
         ctx.voice_client.resume()
-        await ctx.send(f"Music resumed by [{ctx.author.display_name}]")
+        await ctx.send(f"Music resumed by **{ctx.author.display_name}**")
 
     # Start bot
     bot.run(env.get_token())
