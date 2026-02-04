@@ -12,11 +12,14 @@ def try_download(url, channel_id):
     ytdl_opts = {
         'format': 'bestaudio/best',
         'outtmpl': output_path,
+	"js_runtimes": {
+        	"node": {}  # <- key = runtime, value = config dict (empty if none)
+    	},
         'postprocessors': [
             {
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'opus',
-                'preferredquality': '128',
+                'preferredquality': '128'
             }
         ],
     }
@@ -27,7 +30,9 @@ def try_download(url, channel_id):
             video_info = ytdl.extract_info(url, download=False)
             title = video_info.get('title')
             duration = video_info.get('duration')
-            audio_path = ytdl.prepare_filename(video_info).replace('.webm', '.opus')
+#            print(f'[hophop]: {video_info}')
+            audio_path = ytdl.prepare_filename(video_info).rsplit('.', 1)[0] + '.opus'
+#            print(f'[hophop2]: {audio_path}')
             if os.path.exists(audio_path):
                 print('[DOWNLOADER] Music already cached')
                 return title, audio_path

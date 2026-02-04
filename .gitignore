@@ -4,3 +4,4 @@ venv
 .idea/
 
 audio/
+**/__pycache__/**

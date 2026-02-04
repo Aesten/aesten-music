@@ -1,5 +1,6 @@
 import os.path
 import shutil
+import asyncio
 
 import discord
 from discord.ext import commands
@@ -67,7 +68,7 @@ def start_bot():
             return
 
         message = await ctx.send("Preparing audio...")
-        music_data = downloader.try_download(url, ctx.voice_client.channel.id)
+        music_data = await asyncio.to_thread(downloader.try_download, url, ctx.voice_client.channel.id)
 
         if music_data is None:
             await message.edit(content="Failed downloading audio")
