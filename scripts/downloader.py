@@ -1,10 +1,7 @@
 import os
-
 import yt_dlp
 from yt_dlp.utils import DownloadError
-
 from scripts import env
-
 
 def try_download(url, channel_id):
     output_path = os.path.join(os.getcwd(), "audio", str(channel_id), "%(id)s.%(ext)s")
@@ -12,9 +9,9 @@ def try_download(url, channel_id):
     ytdl_opts = {
         'format': 'bestaudio/best',
         'outtmpl': output_path,
-	"js_runtimes": {
-        	"node": {}  # <- key = runtime, value = config dict (empty if none)
-    	},
+        "js_runtimes": {
+            "node": {}  # key = runtime, empty config
+        },
         'postprocessors': [
             {
                 'key': 'FFmpegExtractAudio',
@@ -22,26 +19,32 @@ def try_download(url, channel_id):
                 'preferredquality': '128'
             }
         ],
+        'noplaylist': True,  # optional, prevents playlist expansion
+        'quiet': True,
     }
 
-    with yt_dlp.YoutubeDL(ytdl_opts) as ytdl:
-        try:
-            print('[DOWNLOADER] Checking information')
-            video_info = ytdl.extract_info(url, download=False)
-            title = video_info.get('title')
-            duration = video_info.get('duration')
-#            print(f'[hophop]: {video_info}')
-            audio_path = ytdl.prepare_filename(video_info).rsplit('.', 1)[0] + '.opus'
-#            print(f'[hophop2]: {audio_path}')
+    try:
+        print('[DOWNLOADER] Processing request')
+
+        with yt_dlp.YoutubeDL(ytdl_opts) as ytdl:
+            # Download + extract info in one go
+            info = ytdl.extract_info(url, download=True)
+
+            # Prepare info
+            title = info.get('title')
+            audio_path = ytdl.prepare_filename(info).rsplit('.', 1)[0] + '.opus'
+
+            # Check cache / duration
             if os.path.exists(audio_path):
-                print('[DOWNLOADER] Music already cached')
+                print('[DOWNLOADER] Music cached')
                 return title, audio_path
-            elif duration and duration <= env.get_max_time():
-                print('[DOWNLOADER] Downloading & converting requested music')
-                ytdl.download([url])
-                return title, audio_path
-            else:
-                print('[DOWNLOADER] Song was too long!')
+            elif info.get('duration') and info['duration'] > env.get_max_time():
+                print('[DOWNLOADER] Song too long!')
                 return None
-        except DownloadError:
-            print('[DOWNLOADER] Download Error!')
+
+            return title, audio_path
+
+    except DownloadError:
+        print('[DOWNLOADER] Download Error!')
+        return None
+
