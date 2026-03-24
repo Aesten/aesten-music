@@ -77,8 +77,7 @@ def start_bot():
         def unregister(error):
             if error:
                 print(f"An error occurred while playing the audio: {error}")
-            else:
-                channel_audio_paths[channel] = None
+            channel_audio_paths[channel] = None
 
         audio_source = discord.FFmpegOpusAudio(music_data[1], options='-af volume=0.5')
         ctx.voice_client.play(audio_source, after=unregister)
@@ -125,5 +124,13 @@ def start_bot():
         ctx.voice_client.resume()
         await ctx.send(f"Music resumed by **{ctx.author.display_name}**")
 
+    @bot.event
+    async def on_voice_state_update(member, before, after):
+        # If the bot itself was unexpectedly disconnected, reset the channel state
+        if member.id == bot.user.id and before.channel is not None and after.channel is None:
+            channel = before.channel
+            if channel in channel_audio_paths:
+                channel_audio_paths[channel] = None
+
     # Start bot
-    bot.run(env.get_token())
+    bot.run(env.get_token(), reconnect=True)
