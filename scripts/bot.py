@@ -8,6 +8,8 @@ from scripts import env, downloader
 
 # channel-audio mapping
 channel_audio_paths = {}
+# channel-loop mapping: None = infinite, int = remaining plays
+channel_loop_counts = {}
 
 
 def start_bot():
@@ -49,6 +51,7 @@ def start_bot():
 
         channel = ctx.voice_client.channel
         del channel_audio_paths[channel]
+        channel_loop_counts.pop(channel, None)
         audio_folder_path = os.path.join(os.getcwd(), "audio", str(channel.id))
         shutil.rmtree(audio_folder_path)
         await ctx.voice_client.disconnect()
@@ -85,6 +88,60 @@ def start_bot():
         await message.edit(content=f":notes: {music_data[0]}")
 
     @bot.command()
+    async def loop(ctx, url, times: int = None):
+        await ctx.message.delete()
+        if ctx.voice_client is None:
+            await ctx.send("> I am not currently in a voice channel. Use !join to summon me.")
+            return
+
+        channel = ctx.voice_client.channel
+
+        if ctx.voice_client.is_playing() or channel_audio_paths[channel] is not None:
+            await ctx.send("> The previous music has not properly ended, you can use !stop to force.")
+            return
+
+        message = await ctx.send("Preparing audio...")
+        music_data = await asyncio.to_thread(downloader.try_download, url, ctx.voice_client.channel.id)
+
+        if music_data is None:
+            await message.edit(content="Failed downloading audio")
+            return
+
+        # None = infinite loop, int = countdown
+        channel_loop_counts[channel] = None if times is None else times
+
+        def play_loop(error):
+            if error:
+                print(f"Loop playback error: {error}")
+                channel_audio_paths[channel] = None
+                channel_loop_counts.pop(channel, None)
+                return
+
+            remaining = channel_loop_counts.get(channel)
+
+            # Finite loop: decrement and stop when exhausted
+            if remaining is not None:
+                if remaining <= 1:
+                    channel_audio_paths[channel] = None
+                    channel_loop_counts.pop(channel, None)
+                    return
+                else:
+                    channel_loop_counts[channel] = remaining - 1
+
+            # Re-queue if the voice client is still active (not stopped manually)
+            vc = channel.guild.voice_client
+            if vc and vc.is_connected() and channel_audio_paths.get(channel) is not None:
+                audio_source = discord.FFmpegOpusAudio(music_data[1], options='-af volume=0.5')
+                vc.play(audio_source, after=play_loop)
+
+        audio_source = discord.FFmpegOpusAudio(music_data[1], options='-af volume=0.5')
+        ctx.voice_client.play(audio_source, after=play_loop)
+        channel_audio_paths[channel] = music_data[1]
+
+        loop_label = "∞" if times is None else str(times)
+        await message.edit(content=f":repeat: {music_data[0]} `[{loop_label}x]`")
+
+    @bot.command()
     async def stop(ctx):
         await ctx.message.delete()
 
@@ -98,10 +155,13 @@ def start_bot():
             await ctx.send("> There is no audio being played.")
             return
 
+        # Clear loop state before stopping so the after-callback doesn't re-queue
+        channel_loop_counts.pop(channel, None)
+        channel_audio_paths[channel] = None
+
         if ctx.voice_client.is_playing():
             ctx.voice_client.stop()
 
-        channel_audio_paths[channel] = None
         await ctx.send(f"Music cancelled by **{ctx.author.display_name}**")
 
     @bot.command()
@@ -131,6 +191,7 @@ def start_bot():
             channel = before.channel
             if channel in channel_audio_paths:
                 channel_audio_paths[channel] = None
+            channel_loop_counts.pop(channel, None)
 
     # Start bot
     bot.run(env.get_token(), reconnect=True)
